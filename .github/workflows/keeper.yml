@@ -1,0 +1,21 @@
+name: Yieldr keeper
+on:
+  workflow_dispatch: {}          # the outside alarm clock (cron-job.org) triggers this
+  schedule:
+    - cron: "23 * * * *"         # backup: GitHub's own scheduler, hourly (it may skip; that's fine)
+concurrency:
+  group: yieldr-keeper
+  cancel-in-progress: false      # if two runs overlap, the second waits instead of both sending
+jobs:
+  keep:
+    runs-on: ubuntu-latest
+    if: ${{ vars.YIELDR_VAULT != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+      - name: Run keeper
+        run: bash keeper.sh
+        env:
+          ROBINHOOD_RPC_URL: ${{ secrets.ROBINHOOD_RPC_URL }}
+          KEEPER_PRIVATE_KEY: ${{ secrets.KEEPER_PRIVATE_KEY }}
+          YIELDR_VAULT: ${{ vars.YIELDR_VAULT }}
